@@ -4,7 +4,7 @@
 #define DEBUG_ENABLED  1
 
 String retSymb = "+RTINQ=";                     // start symble when there's any return
-String slaveName = ";Slave2";             // caution that ';'must be included, and make sure the slave name is right.
+String slaveName = ";Slave18";             // caution that ';'must be included, and make sure the slave name is right.
 int nameIndex = 0;
 int addrIndex = 0;
 
@@ -14,15 +14,21 @@ String connectCmd = "\r\n+CONN=";
 SoftwareSerial blueToothSerial(RxD,TxD);
 
 
-
 void setup() {
 
     Serial.begin(9600);
+	
+	pinMode(9, OUTPUT); //Red
+	pinMode(10, OUTPUT); //Green
+	pinMode(11, OUTPUT); //Blue
+					
+	tone(13, 3000, 1000);
+	delay(1000);
 
     pinMode(RxD, INPUT);
     pinMode(TxD, OUTPUT);
 
-    setupBlueToothConnection();
+    //setupBlueToothConnection();
 
     //wait 1s and flush the serial buffer
 
@@ -30,11 +36,13 @@ void setup() {
 
     Serial.flush();
 
-    blueToothSerial.flush();
+    //blueToothSerial.flush();
 
 }
 
-
+bool goToCoord = false;
+int x = -1;
+int y = -1;
 
 void loop() {
     char recvChar;
@@ -46,7 +54,8 @@ void loop() {
             recvChar = blueToothSerial.read();
 
             Serial.print(recvChar);
-
+			
+			checkForCommand(recvChar);
         }
 		
 		//check if there's any data sent from the local serial terminal, you can add the other applications here
@@ -55,21 +64,94 @@ void loop() {
             recvChar  = Serial.read();
 
             blueToothSerial.print(recvChar);
-
+			
+			checkForCommand(recvChar);
         }
 
     }
 
 }
 
+void checkForCommand(recvChar) {
+	// ALL POSSIBLE COMMANDS FROM THE SLAVE:
+		// ` - en route
+		// ~ - collision
+		// @ - returning
+		// # - delivery complete
+		// & - stopped
 
+	if (recvChar == '`' || recvChar == '~' ||
+		recvChar == '@' || recvChar == '#' || recvChar == '&') {
+		rgb(recvChar);
+	}
+	
+	// TEST CODE FOR SLAVE
+	// IF THIS IS IN THE MASTER
+	// THE WORLD WILL END
+	// AND KANYE WILL BE PRESIDENT
+	if (recvChar == '(' && !goToCoord) {
+		goToCoord = true;
+		return;
+	}
+	if (goToCoord) {
+		if (x == -1) {
+			x = int(recvChar) - 48;
+			return;
+		}
+		else if (y == -1) {
+			y = int(recvChar) - 48;
+			return;
+		}
+		else if (recvChar == ')') {
+			// do something here
+			Serial.print("\nGoing to: " + String(x) + ", " + String(y) + "\n");
+			//
+			goToCoord = false;
+			x = -1;
+			y = -;
+		}
+	}
+}
+
+void rgb(char col) {
+	switch (col) {
+		case '~': // red
+			analogWrite(9, 255);
+			analogWrite(10, 0);
+			analogWrite(11, 0);
+			break;
+		case '#': // green
+			analogWrite(9, 0);
+			analogWrite(10, 255);
+			analogWrite(11, 0);
+			break;
+		case '`': // blue
+			analogWrite(9, 0);
+			analogWrite(10, 0);
+			analogWrite(11, 255);
+			break;
+		case '@': // white
+			analogWrite(9, 255);
+			analogWrite(10, 255);
+			analogWrite(11, 255);
+			break;
+		case '&': // stopped
+			analogWrite(9, 0);
+			analogWrite(10, 0);
+			analogWrite(11, 0);
+			break;
+	}
+	
+	tone(13, 3000, 500);
+	delay(500);
+}
 
 void setupBlueToothConnection()
 {
     blueToothSerial.begin(38400);                               // Set BluetoothBee BaudRate to default baud rate 38400
     blueToothSerial.print("\r\n+STWMOD=1\r\n");                 // set the bluetooth work in master mode
     
-    blueToothSerial.print("\r\n+STNA=Master2\r\n");       // set the bluetooth name as
+    blueToothSerial.print("\r\n+STNA=Master18\r\n");       // set the bluetooth name as
         
     blueToothSerial.print("\r\n+STAUTO=0\r\n");                 // Auto-connection is forbidden here
     delay(2000);                                                // This delay is required.
