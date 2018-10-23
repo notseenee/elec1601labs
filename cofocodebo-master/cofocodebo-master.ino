@@ -17,13 +17,13 @@ SoftwareSerial blueToothSerial(RxD,TxD);
 void setup() {
 
     Serial.begin(9600);
-	
-	pinMode(9, OUTPUT); //Red
-	pinMode(10, OUTPUT); //Green
-	pinMode(11, OUTPUT); //Blue
-					
-	tone(13, 3000, 1000);
-	delay(1000);
+  
+  pinMode(9, OUTPUT); //Red
+  pinMode(10, OUTPUT); //Green
+  pinMode(11, OUTPUT); //Blue
+          
+  tone(13, 3000, 1000);
+  delay(1000);
 
     pinMode(RxD, INPUT);
     pinMode(TxD, OUTPUT);
@@ -48,102 +48,102 @@ void loop() {
     char recvChar;
 
     while(1) {
-		//check if there's any data sent from the remote bluetooth shield
+    //check if there's any data sent from the remote bluetooth shield
         if(blueToothSerial.available()) {
 
             recvChar = blueToothSerial.read();
 
             Serial.print(recvChar);
-			
-			checkForCommand(recvChar);
+      
+      checkForCommand(recvChar);
         }
-		
-		//check if there's any data sent from the local serial terminal, you can add the other applications here
+    
+    //check if there's any data sent from the local serial terminal, you can add the other applications here
         if(Serial.available()) {
 
             recvChar  = Serial.read();
 
             blueToothSerial.print(recvChar);
-			
-			checkForCommand(recvChar);
+      
+      checkForCommand(recvChar);
         }
 
     }
 
 }
 
-void checkForCommand(recvChar) {
-	// ALL POSSIBLE COMMANDS FROM THE SLAVE:
-		// ` - en route
-		// ~ - collision
-		// @ - returning
-		// # - delivery complete
-		// & - stopped
+bool checkForCommand(char recvChar) {
+  // ALL POSSIBLE COMMANDS FROM THE SLAVE:
+    // ` - en route
+    // ~ - collision
+    // @ - returning
+    // # - delivery complete
+    // & - stopped
 
-	if (recvChar == '`' || recvChar == '~' ||
-		recvChar == '@' || recvChar == '#' || recvChar == '&') {
-		rgb(recvChar);
-	}
-	
-	// TEST CODE FOR SLAVE
-	// IF THIS IS IN THE MASTER
-	// THE WORLD WILL END
-	// AND KANYE WILL BE PRESIDENT
-	if (recvChar == '(' && !goToCoord) {
-		goToCoord = true;
-		return;
-	}
-	if (goToCoord) {
-		if (x == -1) {
-			x = int(recvChar) - 48;
-			return;
-		}
-		else if (y == -1) {
-			y = int(recvChar) - 48;
-			return;
-		}
-		else if (recvChar == ')') {
-			// do something here
-			Serial.print("\nGoing to: " + String(x) + ", " + String(y) + "\n");
-			//
-			goToCoord = false;
-			x = -1;
-			y = -;
-		}
-	}
+  if (recvChar == '`' || recvChar == '~' ||
+    recvChar == '@' || recvChar == '#' || recvChar == '&') {
+    rgb(recvChar);
+  }
+  
+  // TEST CODE FOR SLAVE
+  // IF THIS IS IN THE MASTER
+  // THE WORLD WILL END
+  // AND KANYE WILL BE PRESIDENT
+  if (recvChar == '(' && !goToCoord) {
+    goToCoord = true;
+    return false;
+  }
+  if (goToCoord) {
+    if (x == -1) {
+      x = int(recvChar) - 48;
+      return false;
+    }
+    else if (y == -1) {
+      y = int(recvChar) - 48;
+      return false;
+    }
+    else if (recvChar == ')') {
+      // do something here
+      Serial.print("\nGoing to: " + String(x) + ", " + String(y) + "\n");
+      //
+      goToCoord = false;
+      x = -1;
+      y = -1;
+    }
+  }
 }
 
 void rgb(char col) {
-	switch (col) {
-		case '~': // red
-			analogWrite(9, 255);
-			analogWrite(10, 0);
-			analogWrite(11, 0);
-			break;
-		case '#': // green
-			analogWrite(9, 0);
-			analogWrite(10, 255);
-			analogWrite(11, 0);
-			break;
-		case '`': // blue
-			analogWrite(9, 0);
-			analogWrite(10, 0);
-			analogWrite(11, 255);
-			break;
-		case '@': // white
-			analogWrite(9, 255);
-			analogWrite(10, 255);
-			analogWrite(11, 255);
-			break;
-		case '&': // stopped
-			analogWrite(9, 0);
-			analogWrite(10, 0);
-			analogWrite(11, 0);
-			break;
-	}
-	
-	tone(13, 3000, 500);
-	delay(500);
+  switch (col) {
+    case '~': // red
+      analogWrite(9, 255);
+      analogWrite(10, 0);
+      analogWrite(11, 0);
+      break;
+    case '#': // green
+      analogWrite(9, 0);
+      analogWrite(10, 255);
+      analogWrite(11, 0);
+      break;
+    case '`': // blue
+      analogWrite(9, 0);
+      analogWrite(10, 0);
+      analogWrite(11, 255);
+      break;
+    case '@': // white
+      analogWrite(9, 255);
+      analogWrite(10, 255);
+      analogWrite(11, 255);
+      break;
+    case '&': // stopped
+      analogWrite(9, 0);
+      analogWrite(10, 0);
+      analogWrite(11, 0);
+      break;
+  }
+  
+  tone(13, 3000, 500);
+  delay(500);
 }
 
 void setupBlueToothConnection()
