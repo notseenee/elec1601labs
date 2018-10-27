@@ -28,7 +28,7 @@ void setup() {
     pinMode(RxD, INPUT);
     pinMode(TxD, OUTPUT);
 
-    //setupBlueToothConnection();
+    setupBlueToothConnection();
 
     //wait 1s and flush the serial buffer
 
@@ -36,7 +36,7 @@ void setup() {
 
     Serial.flush();
 
-    //blueToothSerial.flush();
+    blueToothSerial.flush();
 
 }
 
