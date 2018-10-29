@@ -1,3 +1,21 @@
+/*
+Lab T15 Group 2
+Codebo Slave Code
+
+  functions: 
+    bool checkForCommand(char recvChar) - parse special characters to trigger commands
+    void followCoordinate(long x, long y)
+    long irDetect(long irLedPin, long irReceiverPin, long frequency)
+    void turnLeft(bool direction, long del)
+    long forward(bool direction, long del)
+    void stop(long del)
+    long delayCheckCollision(long del)
+    bool checkCollision()
+    
+  All other functions and variables are adapted from the Bluetooth mastercode from Canvas.
+
+*/
+
 #include <Servo.h> // Include servo library
 #include <SoftwareSerial.h>   //Software Serial Port
 #define RxD 7
@@ -37,18 +55,18 @@ void setup() {
 void loop() {
     char revChar;
     while(1) {
-		//check if there's any data sent from the remote bluetooth shield
+	//check if there's any data sent from the remote bluetooth shield
         if (blueToothSerial.available()) {
             revChar = blueToothSerial.read();
-			checkForCommand(revChar);
+	    checkForCommand(revChar);
         }
-		//check if there's any data sent from the local serial terminal, you can add the other applications here
+	//check if there's any data sent from the local serial terminal, you can add the other applications here
         if (Serial.available()) {
             revChar = Serial.read();
             blueToothSerial.print(revChar);
         }
 
-		stop(100);
+	stop(100);
     }
 }
 
@@ -82,6 +100,7 @@ bool checkForCommand(char revChar) {
 
 long detectRate = 100;
 
+// Goes to the specified coordinates
 void followCoordinate(long x, long y) {
 	long xDel = x * oneMetreTime;
 	long yDel = y * oneMetreTime;
@@ -189,12 +208,14 @@ long forward(bool direction, long del) {
 	return delayCheckCollision(del);
 }
 
+// Stops all movement
 void stop(long del) {
 	servoLeft.writeMicroseconds(stopValue);
 	servoRight.writeMicroseconds(stopValue);
 	delay(del);
 }
 
+// Calls checkCollision for a specific interval
 long delayCheckCollision(long del) {
 	long amount = del / detectRate;
 	long rem = del % detectRate;
@@ -213,6 +234,7 @@ long delayCheckCollision(long del) {
 	return del;
 }
 
+// Checks for a potential collision using the IR sensors
 bool checkCollision() {
 	//4ms delay looking for ir.
 	int irEyeLeft = !irDetect(9, 10, 38000);
