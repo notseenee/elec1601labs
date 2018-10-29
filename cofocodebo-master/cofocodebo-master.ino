@@ -1,10 +1,23 @@
-#include <SoftwareSerial.h>                     // Software Serial Port
+/*
+Lab T15 Group 2
+Codebo Master Code
+
+  functions: 
+    bool checkForCommand(char recvChar) - parse special characters to trigger commands
+    void rgb(char col) - display different colours on the LED and beep
+    
+  All other functions and variables are adapted from the Bluetooth mastercode from Canvas.
+
+*/
+
+// from Canvas Bluetooth master code
+#include <SoftwareSerial.h>        // Software Serial Port
 #define RxD 7
 #define TxD 6
 #define DEBUG_ENABLED  1
 
-String retSymb = "+RTINQ=";                     // start symble when there's any return
-String slaveName = ";Slave18";             // caution that ';'must be included, and make sure the slave name is right.
+String retSymb = "+RTINQ=";        // start symbol when there's any return
+String slaveName = ";Slave18";     // caution that ';'must be included, and make sure the slave name is right.
 int nameIndex = 0;
 int addrIndex = 0;
 
@@ -15,15 +28,15 @@ SoftwareSerial blueToothSerial(RxD,TxD);
 
 
 void setup() {
-
     Serial.begin(9600);
   
-  pinMode(9, OUTPUT); //Red
-  pinMode(10, OUTPUT); //Green
-  pinMode(11, OUTPUT); //Blue
-          
-  tone(13, 3000, 1000);
-  delay(1000);
+    // Set LED pins
+    pinMode(9, OUTPUT); //Red
+    pinMode(10, OUTPUT); //Green
+    pinMode(11, OUTPUT); //Blue
+    // Play startup tone
+    tone(13, 3000, 1000);
+    delay(1000);
 
     pinMode(RxD, INPUT);
     pinMode(TxD, OUTPUT);
@@ -31,18 +44,12 @@ void setup() {
     setupBlueToothConnection();
 
     //wait 1s and flush the serial buffer
-
     delay(1000);
 
     Serial.flush();
-
     blueToothSerial.flush();
 
 }
-
-bool goToCoord = false;
-int x = -1;
-int y = -1;
 
 void loop() {
     char recvChar;
@@ -50,28 +57,23 @@ void loop() {
     while(1) {
     //check if there's any data sent from the remote bluetooth shield
         if(blueToothSerial.available()) {
-
             recvChar = blueToothSerial.read();
-
             Serial.print(recvChar);
       
-      checkForCommand(recvChar);
+            checkForCommand(recvChar);
         }
     
     //check if there's any data sent from the local serial terminal, you can add the other applications here
         if(Serial.available()) {
-
             recvChar  = Serial.read();
-
             blueToothSerial.print(recvChar);
       
-      checkForCommand(recvChar);
+            checkForCommand(recvChar);
         }
-
     }
-
 }
 
+// Parse commands from Bluetooth or local serials
 bool checkForCommand(char recvChar) {
   // ALL POSSIBLE COMMANDS FROM THE SLAVE:
     // ` - en route
@@ -84,35 +86,9 @@ bool checkForCommand(char recvChar) {
     recvChar == '@' || recvChar == '#' || recvChar == '&') {
     rgb(recvChar);
   }
-  
-  // TEST CODE FOR SLAVE
-  // IF THIS IS IN THE MASTER
-  // THE WORLD WILL END
-  // AND KANYE WILL BE PRESIDENT
-  if (recvChar == '(' && !goToCoord) {
-    goToCoord = true;
-    return false;
-  }
-  if (goToCoord) {
-    if (x == -1) {
-      x = int(recvChar) - 48;
-      return false;
-    }
-    else if (y == -1) {
-      y = int(recvChar) - 48;
-      return false;
-    }
-    else if (recvChar == ')') {
-      // do something here
-      Serial.print("\nGoing to: " + String(x) + ", " + String(y) + "\n");
-      //
-      goToCoord = false;
-      x = -1;
-      y = -1;
-    }
-  }
 }
 
+// Change LED colour and play tone based on character command
 void rgb(char col) {
   switch (col) {
     case '~': // red
@@ -165,109 +141,45 @@ void setupBlueToothConnection()
     //find the target slave
 
     char recvChar;
-
-    while(1)
-
-    {
-
-        if(blueToothSerial.available())
-
-        {
-
+    while(1) {
+        if(blueToothSerial.available()) {
             recvChar = blueToothSerial.read();
-
             recvBuf += recvChar;
-
             nameIndex = recvBuf.indexOf(slaveName);             //get the position of slave name
-
-            
-
-                                                                //nameIndex -= 1;
-
-                                                                //decrease the ';' in front of the slave name, to get the position of the end of the slave address
-
-            if ( nameIndex != -1 )
-
-            {
-
+            //decrease the ';' in front of the slave name, to get the position of the end of the slave address
+            if ( nameIndex != -1 ) {
                 //Serial.print(recvBuf);
-
                 addrIndex = (recvBuf.indexOf(retSymb,(nameIndex - retSymb.length()- 18) ) + retSymb.length());//get the start position of slave address
-
                 slaveAddr = recvBuf.substring(addrIndex, nameIndex);//get the string of slave address
-
                 break;
-
             }
-
         }
-
     }
-
-    
-
     //form the full connection command
-
     connectCmd += slaveAddr;
-
     connectCmd += "\r\n";
-
     int connectOK = 0;
-
     Serial.print("Connecting to slave:");
-
     Serial.print(slaveAddr);
-
     Serial.println(slaveName);
-
     //connecting the slave till they are connected
-
-    do
-
-    {
-
+    do {
         blueToothSerial.print(connectCmd);//send connection command
-
         recvBuf = "";
-
-        while(1)
-
-        {
-
-            if(blueToothSerial.available()){
-
+        while(1) {
+            if(blueToothSerial.available()) {
                 recvChar = blueToothSerial.read();
-
                 recvBuf += recvChar;
-
-                if(recvBuf.indexOf("CONNECT:OK") != -1)
-
-                {
-
+                if(recvBuf.indexOf("CONNECT:OK") != -1) {
                     connectOK = 1;
-
                     Serial.println("Connected!");
-
                     blueToothSerial.print("Connected!");
-
                     break;
-
-                }
-
-                else if(recvBuf.indexOf("CONNECT:FAIL") != -1)
-
-                {
-
+                } else if(recvBuf.indexOf("CONNECT:FAIL") != -1) {
                     Serial.println("Connect again!");
-
                     break;
-
                 }
-
             }
-
         }
-
-    }while(0 == connectOK);
-
+    } while(0 == connectOK);
 }
